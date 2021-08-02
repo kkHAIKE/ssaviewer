@@ -1,6 +1,7 @@
 package gen
 
 import (
+	"fmt"
 	"html"
 	"io"
 )
@@ -727,5 +728,5 @@ func (w *HTMLWriter) Close() {
 	io.WriteString(w.w, "</body>")
 	io.WriteString(w.w, "</html>")
 	w.w.Close()
-	// fmt.Printf("dumped SSA to %v\n", w.path)
+	fmt.Printf("dumped SSA to %v\n", "ssa.html")
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"math"
 	"os"
 	"reflect"
 	"strconv"
@@ -212,12 +213,16 @@ func (v *Value) LongHTML() string {
 	return s
 }
 
-func (b *Block) HTML() string {
+func blockHTML(b *ssa.BasicBlock) string {
 	// TODO: Using the value ID as the class ignores the fact
 	// that value IDs get recycled and that some values
 	// are transmuted into other values.
-	s := html.EscapeString(b.String())
+	s := html.EscapeString(fmt.Sprintf("b%d", b.Index))
 	return fmt.Sprintf("<span class=\"%s ssa-block\">%s</span>", s, s)
+}
+
+func (b *Block) HTML() string {
+	return blockHTML(b.BasicBlock)
 }
 
 func (b *Block) LongHTML() string {
@@ -235,7 +240,7 @@ func (b *Block) LongHTML() string {
 	if len(b.Succs) > 0 {
 		s += " &#8594;" // right arrow
 		for _, e := range b.Succs {
-			s += fmt.Sprintf(" b%d", e.Index)
+			s += " " + blockHTML(e)
 		}
 	}
 	// switch b.Likely {
@@ -244,7 +249,7 @@ func (b *Block) LongHTML() string {
 	// case BranchLikely:
 	// 	s += " (likely)"
 	// }
-	if b.StartLine != 0 {
+	if b.StartLine != math.MaxInt32 {
 		// TODO does not begin to deal with the full complexity of line numbers.
 		// Maybe we want a string/slice instead, of outer-inner when inlining.
 		s += fmt.Sprintf(" <span class=\"l%d line-number\">(%d)</span>", b.StartLine, b.StartLine)
@@ -293,7 +298,7 @@ func (p htmlFuncPrinter) startBlock(b *Block, reachable bool) {
 	if len(b.Preds) > 0 {
 		io.WriteString(p.w, " &#8592;") // left arrow
 		for _, e := range b.Preds {
-			fmt.Fprintf(p.w, " b%d", e.Index)
+			fmt.Fprintf(p.w, " %s", blockHTML(e))
 		}
 	}
 	if len(b.Values) > 0 {
