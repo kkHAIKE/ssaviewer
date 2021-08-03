@@ -141,11 +141,12 @@ func newBlock(b *ssa.BasicBlock) (r *Block) {
 }
 
 func (b *Block) addValue(v *Value) (add bool) {
-	if i, ok := v.Node.(ssa.Instruction); ok && i.Block() == b.BasicBlock {
-		b.Values = append(b.Values, v)
-		return true
-	}
-	if v.Pos.IsKnown() {
+	if i, ok := v.Node.(ssa.Instruction); ok {
+		if i.Block() == b.BasicBlock {
+			b.Values = append(b.Values, v)
+			return true
+		}
+	} else if v.Pos.IsKnown() {
 		l := posToLine(v.Pos.Pos)
 		if l >= b.StartLine && l <= b.EndLine {
 			b.Values = append(b.Values, v)
