@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go/types"
 	"os"
 
 	"github.com/kkHAIKE/ssaviewer/gen"
@@ -13,10 +14,16 @@ import (
 
 func getAllFunction(prog *ssa.Program, pkg *ssa.Package) (ret []*ssa.Function) {
 	add := func(f *ssa.Function) {
+		if f == nil {
+			return
+		}
 		ret = append(ret, f)
-
-		for _, af := range f.AnonFuncs {
-			ret = append(ret, af)
+		ret = append(ret, f.AnonFuncs...)
+	}
+	addType := func(tp types.Type) {
+		ts := prog.MethodSets.MethodSet(tp)
+		for i := 0; i < ts.Len(); i++ {
+			add(prog.MethodValue(ts.At(i)))
 		}
 	}
 
@@ -25,11 +32,8 @@ func getAllFunction(prog *ssa.Program, pkg *ssa.Package) (ret []*ssa.Function) {
 		case *ssa.Function:
 			add(vv)
 		case *ssa.Type:
-			if ts := prog.MethodSets.MethodSet(vv.Type()); ts != nil {
-				for i := 0; i < ts.Len(); i++ {
-					add(prog.MethodValue(ts.At(i)))
-				}
-			}
+			addType(vv.Type())
+			addType(types.NewPointer(vv.Type()))
 		}
 	}
 	return
